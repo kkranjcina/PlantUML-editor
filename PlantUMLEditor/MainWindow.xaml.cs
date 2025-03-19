@@ -12,7 +12,7 @@ namespace PlantUMLEditor
 
         private void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)
         {
-            string input = ChatInputTextBox.Text;
+            string input = txtChatInput.Text;
 
             if (string.IsNullOrWhiteSpace(input))
             {
@@ -25,7 +25,7 @@ namespace PlantUMLEditor
         {
             try
             {
-                string umlCode = PlantUmlCodeTextBox.Text;
+                string umlCode = txtPlantUmlCode.Text;
                 if (string.IsNullOrWhiteSpace(umlCode))
                 {
                     MessageBox.Show("Unesite PlantUML kod.", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Warning);
