@@ -2,7 +2,13 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
+using Newtonsoft.Json;
+using System.Security.Cryptography;
 
 namespace PlantUMLEditor
 {
@@ -11,11 +17,14 @@ namespace PlantUMLEditor
         private string _plantUmlJarPath;
         private readonly string _outputDirectory = Path.Combine(Path.GetTempPath(), "PlantUML");
         private System.Windows.Controls.Image _currentImage;
+        private readonly string _configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PlantUMLEditor", "config.dat");
 
         public MainWindow()
         {
             InitializeComponent();
             GetSolutionDirectory();
+
+            Directory.CreateDirectory(Path.GetDirectoryName(_configFilePath));
         }
 
         private void GetSolutionDirectory()
@@ -116,14 +125,154 @@ namespace PlantUMLEditor
             return outputFilePath;
         }
 
-        private void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)
+        private async void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)
         {
-            string input = txtChatInput.Text;
-
-            if (string.IsNullOrWhiteSpace(input))
+            try
             {
-                MessageBox.Show("Unesite tekst upita.");
-                return;
+                string input = txtChatInput.Text;
+
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    MessageBox.Show("Unesite tekst upita.");
+                    return;
+                }
+
+                btnSendQuery.IsEnabled = false;
+                txtChatResponse.Text = "Učitavanje odgovora...";
+
+                string apiKey = GetApiKey();
+
+                if (string.IsNullOrEmpty(apiKey))
+                {
+                    MessageBox.Show("API ključ nije postavljen. Postavite ga u postavkama aplikacije.");
+                    btnSendQuery.IsEnabled = true;
+                    return;
+                }
+
+                string response = await SendChatGPTRequestAsync(input, apiKey);
+
+                txtChatResponse.Text = response;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Došlo je do pogreške: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
+                txtChatResponse.Text = string.Empty;
+            }
+            finally
+            {
+                btnSendQuery.IsEnabled = true;
+            }
+        }
+
+        private void SaveApiKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string apiKey = txtApiKey.Password;
+
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    MessageBox.Show("Unesite API ključ.", "Upozorenje", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                SaveEncryptedApiKey(apiKey);
+
+                txtApiKeyStatus.Text = "API ključ je uspješno spremljen!";
+                txtApiKeyStatus.Visibility = Visibility.Visible;
+
+                txtApiKey.Clear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Pogreška pri spremanju API ključa: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveEncryptedApiKey(string apiKey)
+        {
+            byte[] entropy = new byte[16];
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(entropy);
+            }
+
+            byte[] encryptedData = ProtectedData.Protect(
+                Encoding.UTF8.GetBytes(apiKey),
+                entropy,
+                DataProtectionScope.CurrentUser);
+
+            using (var fs = new FileStream(_configFilePath, FileMode.Create))
+            using (var bw = new BinaryWriter(fs))
+            {
+                bw.Write(entropy.Length);
+                bw.Write(entropy);
+                bw.Write(encryptedData.Length);
+                bw.Write(encryptedData);
+            }
+        }
+
+        private string GetApiKey()
+        {
+            try
+            {
+                if (!File.Exists(_configFilePath))
+                    return null;
+
+                using (var fs = new FileStream(_configFilePath, FileMode.Open))
+                using (var br = new BinaryReader(fs))
+                {
+                    int entropyLength = br.ReadInt32();
+                    byte[] entropy = br.ReadBytes(entropyLength);
+                    int encryptedDataLength = br.ReadInt32();
+                    byte[] encryptedData = br.ReadBytes(encryptedDataLength);
+
+                    byte[] decryptedData = ProtectedData.Unprotect(
+                        encryptedData,
+                        entropy,
+                        DataProtectionScope.CurrentUser);
+
+                    return Encoding.UTF8.GetString(decryptedData);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<string> SendChatGPTRequestAsync(string prompt, string apiKey)
+        {
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri("https://api.openai.com/v1/chat/completions");
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var requestData = new
+                {
+                    model = "gpt-3.5-turbo",
+                    messages = new[]
+                    {
+                        new { role = "system", content = "Generiraj samo PlantUML kod. Ne dodavaj nikakva objašnjenja, " +
+                        "komentare, uvode ili pitanja. Odgovori samo s validnim PlantUML kodom koji počinje s @startuml i završava s @enduml." },
+                        new { role = "user", content = prompt }
+                    },
+                    max_tokens = 1000
+                };
+
+                var content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"API greška: {response.StatusCode}, {responseContent}");
+                }
+
+                dynamic jsonResponse = JsonConvert.DeserializeObject(responseContent);
+                return jsonResponse.choices[0].message.content.ToString();
             }
         }
     }
