@@ -6,6 +6,142 @@
         xmlns:local="clr-namespace:PlantUMLEditor"
         mc:Ignorable="d"
         Title="PlantUML Editor" Height="720" Width="1280" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#f0f0f0"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                             VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#e5e5e5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#d0d0d0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--<Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#f0f0f0"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#d1d1d1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                 Background="{TemplateBinding Background}"
+                                 BorderBrush="{TemplateBinding BorderBrush}"
+                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                 Padding="{TemplateBinding Padding}"
+                                 IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Border" 
+                                       Background="{TemplateBinding Background}"
+                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                       BorderThickness="{TemplateBinding BorderThickness}"
+                                       CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Margin="5,0,0,0"
+                                                        HorizontalAlignment="Left"
+                                                        VerticalAlignment="Center"
+                                                        Content="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}"/>
+                                                <Path x:Name="Arrow"
+                                             Grid.Column="1"
+                                             Margin="0,0,8,0"
+                                             Fill="#666666"
+                                             Data="M0,0 L4,4 L8,0 Z"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" TargetName="Border" Value="#e5e5e5"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter Property="Background" TargetName="Border" Value="#e0e0e0"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Popup x:Name="Popup"
+                          AllowsTransparency="True"
+                          IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                          Placement="Bottom"
+                          PopupAnimation="Slide"
+                          StaysOpen="False">
+                                <Border x:Name="DropDownBorder"
+                               Background="White"
+                               BorderBrush="#d1d1d1"
+                               BorderThickness="1"
+                               CornerRadius="4"
+                               Margin="0,2,0,0">
+                                    <ScrollViewer MaxHeight="200" SnapsToDevicePixels="True">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Border"
+                       Background="{TemplateBinding Background}"
+                       BorderThickness="0"
+                       Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" TargetName="Border" Value="#f5f5f5"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" TargetName="Border" Value="#e1f5fe"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>-->
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -15,9 +151,21 @@
         </Grid.ColumnDefinitions>
 
         <!-- Prostor za prikaz dijagrama -->
-        <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1">
+        <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" >
             <Canvas Name="DiagramCanvas" Background="White"/>
         </Border>
+
+        <StackPanel Orientation="Horizontal" Margin="0,10,30,30" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <TextBlock Text="Izvoz dijagrama:" VerticalAlignment="Bottom" Margin="0,0,10,5"/>
+            <ComboBox x:Name="cmbExportFormat" Width="120" Height="25" SelectedIndex="0">
+                <ComboBoxItem Content="PNG"/>
+                <ComboBoxItem Content="SVG"/>
+                <ComboBoxItem Content="PDF"/>
+                <ComboBoxItem Content="EPS"/>
+                <ComboBoxItem Content="TXT"/>
+            </ComboBox>
+            <Button x:Name="btnExport" Content="Izvoz" Margin="10,0,0,0" Padding="10,2" Height="25" Width="50" VerticalAlignment="Bottom" Click="ExportDiagram_Click"/>
+        </StackPanel>
 
         <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                       Background="Gray" Width="5"/>
@@ -71,5 +219,46 @@
         <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
                       ShowsPreview="True"/>
+
+        <Border x:Name="statusNotification" 
+        Visibility="Collapsed"
+        Background="#333333" 
+        BorderBrush="#555555" 
+        BorderThickness="1" 
+        CornerRadius="4"
+        Padding="12,8" 
+        HorizontalAlignment="Center" 
+        VerticalAlignment="Bottom"
+        Margin="0,0,0,20"
+        Panel.ZIndex="1000">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Spinner animacija -->
+                <Canvas x:Name="spinnerCanvas" Width="20" Height="20" Margin="0,0,10,0">
+                    <Ellipse Width="20" Height="20" StrokeThickness="3">
+                        <Ellipse.Stroke>
+                            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                <GradientStop Color="#3498db" Offset="0"/>
+                                <GradientStop Color="Transparent" Offset="0.7"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Stroke>
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="spinnerRotation" CenterX="10" CenterY="10" Angle="0"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Canvas>
+
+                <!-- Tekst statusa -->
+                <TextBlock x:Name="statusText" 
+                   Grid.Column="1" 
+                   Text="Izvoz u tijeku..." 
+                   Foreground="White" 
+                   VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

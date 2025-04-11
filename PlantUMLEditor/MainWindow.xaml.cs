@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
+using System.Windows.Controls;
+using Microsoft.Win32;
+using System.Windows.Media;
 
 namespace PlantUMLEditor
 {
@@ -22,6 +25,16 @@ namespace PlantUMLEditor
         public MainWindow()
         {
             InitializeComponent();
+
+            var spinnerAnimation = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                Duration = new Duration(TimeSpan.FromSeconds(1)),
+                RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever
+            };
+            spinnerRotation.BeginAnimation(RotateTransform.AngleProperty, spinnerAnimation);
+
             GetSolutionDirectory();
 
             Directory.CreateDirectory(Path.GetDirectoryName(_configFilePath));
@@ -51,7 +64,7 @@ namespace PlantUMLEditor
             }
         }
 
-        private void GenerateDiagram_Click(object sender, RoutedEventArgs e)
+        private async void GenerateDiagram_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -67,7 +80,7 @@ namespace PlantUMLEditor
                     _currentImage.Source = null;
                 }
 
-                string diagramPath = GeneratePlantUmlDiagram(umlCode);
+                string diagramPath = await Task.Run(() => GeneratePlantUmlDiagram(umlCode));
 
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -108,7 +121,7 @@ namespace PlantUMLEditor
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "java",
-                    Arguments = $"-jar \"{_plantUmlJarPath}\" \"{umlFilePath}\" -o \"{_outputDirectory}\"",
+                    Arguments = $"-DPLANTUML_LIMIT_SIZE=8192 -jar \"{_plantUmlJarPath}\" \"{umlFilePath}\" -o \"{_outputDirectory}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -117,12 +130,204 @@ namespace PlantUMLEditor
             };
 
             process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
             if (!File.Exists(outputFilePath))
-                throw new Exception("Dijagram nije generiran. Provjerite je li PlantUML ispravno konfiguriran.");
+            {
+                throw new Exception("Dijagram nije generiran. Detalji: " + error);
+            }
 
             return outputFilePath;
+        }
+
+        private async void ExportDiagram_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string umlCode = txtPlantUmlCode.Text;
+                if (string.IsNullOrWhiteSpace(umlCode))
+                {
+                    MessageBox.Show("Unesite PlantUML kod.", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                ComboBoxItem selectedItem = cmbExportFormat.SelectedItem as ComboBoxItem;
+                string format = selectedItem.Content.ToString().ToLower();
+
+                if (format == "pdf" && !CheckPdfDependencies())
+                {
+                    MessageBox.Show("Za izvoz u PDF format potrebne su dodatne biblioteke. Molimo provjerite jesu li sve potrebne JAR datoteke u istom direktoriju kao i plantuml.jar.",
+                        "Nedostaju biblioteke", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                SaveFileDialog saveDialog = new SaveFileDialog();
+                saveDialog.Title = "Spremi dijagram";
+
+                switch (format)
+                {
+                    case "png":
+                        saveDialog.Filter = "PNG slika (*.png)|*.png";
+                        break;
+                    case "svg":
+                        saveDialog.Filter = "SVG vektorska slika (*.svg)|*.svg";
+                        break;
+                    case "pdf":
+                        saveDialog.Filter = "PDF dokument (*.pdf)|*.pdf";
+                        break;
+                    case "eps":
+                        saveDialog.Filter = "EPS dokument (*.eps)|*.eps";
+                        break;
+                    case "txt":
+                        saveDialog.Filter = "ASCII tekst (*.txt)|*.txt";
+                        break;
+                }
+
+                saveDialog.DefaultExt = format;
+                saveDialog.FileName = $"diagram_{DateTime.Now.ToString("yyyyMMdd")}";
+
+                bool? result = saveDialog.ShowDialog();
+
+                if (result == true)
+                {
+                    btnExport.IsEnabled = false;
+                    ShowStatusNotification("Izvoz u tijeku...");
+
+                    string tempFilePath = await Task.Run(() => ExportPlantUmlDiagram(umlCode, format));
+
+                    File.Copy(tempFilePath, saveDialog.FileName, true);
+
+                    try { File.Delete(tempFilePath); } catch { }
+
+                    HideStatusNotification();
+
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = saveDialog.FileName,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                HideStatusNotification();
+
+                MessageBox.Show($"Došlo je do pogreške prilikom izvoza: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                btnExport.IsEnabled = true;
+            }
+        }
+
+        private bool CheckPdfDependencies()
+        {
+            string[] requiredJars = new string[]
+            {
+                "avalon-framework-4.2.0.jar",
+                "batik-all-1.7.jar",
+                "commons-io-1.3.1.jar",
+                "commons-logging-1.0.4.jar",
+                "fop.jar",
+                "xml-apis-ext-1.3.04.jar",
+                "xmlgraphics-commons-1.4.jar"
+            };
+
+            string plantUmlDir = Path.GetDirectoryName(_plantUmlJarPath);
+
+            foreach (string jar in requiredJars)
+            {
+                if (!File.Exists(Path.Combine(plantUmlDir, jar)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private string ExportPlantUmlDiagram(string umlCode, string format)
+        {
+            // stvaranje direktorija za izvoz ako ne postoji
+            Directory.CreateDirectory(_outputDirectory);
+
+            // generiranje jedinstvenog imena datoteke
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            string umlFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.puml");
+
+            // određivanje ekstenzije datoteke na temelju formata
+            string fileExtension = format;
+            if (format == "txt") fileExtension = "atxt"; // PlantUML koristi atxt za ASCII art
+
+            string outputFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.{fileExtension}");
+
+            File.WriteAllText(umlFilePath, umlCode);
+
+            string formatArg = format == "png" ? "" : $"-t{format}";
+
+            Process process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "java",
+                    Arguments = $"-jar \"{_plantUmlJarPath}\" {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (!File.Exists(outputFilePath))
+            {
+                throw new Exception($"Dijagram nije generiran. Detalji: {error}");
+            }
+
+            return outputFilePath;
+        }
+
+        private void ShowStatusNotification(string message)
+        {
+            statusText.Text = message;
+            statusNotification.Visibility = Visibility.Visible;
+
+            statusNotification.Opacity = 0;
+            var fadeInAnimation = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = new Duration(TimeSpan.FromMilliseconds(300))
+            };
+            statusNotification.BeginAnimation(OpacityProperty, fadeInAnimation);
+        }
+
+        private void HideStatusNotification()
+        {
+            var fadeOutAnimation = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = 1,
+                To = 0,
+                Duration = new Duration(TimeSpan.FromMilliseconds(300))
+            };
+            fadeOutAnimation.Completed += (s, e) =>
+            {
+                statusNotification.Visibility = Visibility.Collapsed;
+            };
+            statusNotification.BeginAnimation(OpacityProperty, fadeOutAnimation);
+        }
+
+        private async Task ShowTemporaryStatusNotification(string message, int durationMs = 10000)
+        {
+            ShowStatusNotification(message);
+            await Task.Delay(durationMs);
+            HideStatusNotification();
         }
 
         private async void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)
