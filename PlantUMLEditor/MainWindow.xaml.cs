@@ -56,7 +56,7 @@ namespace PlantUMLEditor
                 currentDirectory = Directory.GetParent(currentDirectory)?.FullName;
             }
 
-            _plantUmlJarPath = Path.Combine(solutionDirectory, "plantuml-1.2025.2.jar");
+            _plantUmlJarPath = Path.Combine(solutionDirectory, "jarFiles", "plantuml-1.2025.2.jar");
 
             if (!File.Exists(_plantUmlJarPath))
             {
@@ -80,7 +80,11 @@ namespace PlantUMLEditor
                     _currentImage.Source = null;
                 }
 
+                ShowStatusNotification("Generiranje u tijeku...");
+
                 string diagramPath = await Task.Run(() => GeneratePlantUmlDiagram(umlCode));
+
+                HideStatusNotification();
 
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -134,6 +138,7 @@ namespace PlantUMLEditor
             string error = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
+
             if (!File.Exists(outputFilePath))
             {
                 throw new Exception("Dijagram nije generiran. Detalji: " + error);
@@ -155,13 +160,6 @@ namespace PlantUMLEditor
 
                 ComboBoxItem selectedItem = cmbExportFormat.SelectedItem as ComboBoxItem;
                 string format = selectedItem.Content.ToString().ToLower();
-
-                if (format == "pdf" && !CheckPdfDependencies())
-                {
-                    MessageBox.Show("Za izvoz u PDF format potrebne su dodatne biblioteke. Molimo provjerite jesu li sve potrebne JAR datoteke u istom direktoriju kao i plantuml.jar.",
-                        "Nedostaju biblioteke", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
 
                 SaveFileDialog saveDialog = new SaveFileDialog();
                 saveDialog.Title = "Spremi dijagram";
@@ -222,44 +220,15 @@ namespace PlantUMLEditor
             }
         }
 
-        private bool CheckPdfDependencies()
-        {
-            string[] requiredJars = new string[]
-            {
-                "avalon-framework-4.2.0.jar",
-                "batik-all-1.7.jar",
-                "commons-io-1.3.1.jar",
-                "commons-logging-1.0.4.jar",
-                "fop.jar",
-                "xml-apis-ext-1.3.04.jar",
-                "xmlgraphics-commons-1.4.jar"
-            };
-
-            string plantUmlDir = Path.GetDirectoryName(_plantUmlJarPath);
-
-            foreach (string jar in requiredJars)
-            {
-                if (!File.Exists(Path.Combine(plantUmlDir, jar)))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         private string ExportPlantUmlDiagram(string umlCode, string format)
         {
-            // stvaranje direktorija za izvoz ako ne postoji
             Directory.CreateDirectory(_outputDirectory);
 
-            // generiranje jedinstvenog imena datoteke
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
             string umlFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.puml");
 
-            // određivanje ekstenzije datoteke na temelju formata
             string fileExtension = format;
-            if (format == "txt") fileExtension = "atxt"; // PlantUML koristi atxt za ASCII art
+            if (format == "txt") fileExtension = "atxt";
 
             string outputFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.{fileExtension}");
 
@@ -267,9 +236,35 @@ namespace PlantUMLEditor
 
             string formatArg = format == "png" ? "" : $"-t{format}";
 
-            Process process = new Process
+            string plantUmlDir = Path.GetDirectoryName(_plantUmlJarPath);
+
+            ProcessStartInfo startInfo;
+
+            if (format == "pdf")
             {
-                StartInfo = new ProcessStartInfo
+                string classpath = $"\"{_plantUmlJarPath}\"";
+
+                foreach (string jarFile in Directory.GetFiles(plantUmlDir, "*.jar"))
+                {
+                    if (Path.GetFileName(jarFile) != Path.GetFileName(_plantUmlJarPath))
+                    {
+                        classpath += $";\"{jarFile}\"";
+                    }
+                }
+
+                startInfo = new ProcessStartInfo
+                {
+                    FileName = "java",
+                    Arguments = $"-Djava.awt.headless=true -cp {classpath} net.sourceforge.plantuml.Run {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+            }
+            else
+            {
+                startInfo = new ProcessStartInfo
                 {
                     FileName = "java",
                     Arguments = $"-jar \"{_plantUmlJarPath}\" {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
@@ -277,8 +272,10 @@ namespace PlantUMLEditor
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
-                }
-            };
+                };
+            }
+
+            Process process = new Process { StartInfo = startInfo };
 
             process.Start();
             string output = process.StandardOutput.ReadToEnd();
