@@ -179,7 +179,7 @@ namespace PlantUMLEditor
                         saveDialog.Filter = "EPS dokument (*.eps)|*.eps";
                         break;
                     case "txt":
-                        saveDialog.Filter = "ASCII tekst (*.txt)|*.txt";
+                        saveDialog.Filter = "TXT tekst (*.txt)|*.txt";
                         break;
                 }
 
@@ -193,19 +193,33 @@ namespace PlantUMLEditor
                     btnExport.IsEnabled = false;
                     ShowStatusNotification("Izvoz u tijeku...");
 
-                    string tempFilePath = await Task.Run(() => ExportPlantUmlDiagram(umlCode, format));
-
-                    File.Copy(tempFilePath, saveDialog.FileName, true);
-
-                    try { File.Delete(tempFilePath); } catch { }
-
-                    HideStatusNotification();
-
-                    Process.Start(new ProcessStartInfo
+                    if (format == "txt")
                     {
-                        FileName = saveDialog.FileName,
-                        UseShellExecute = true
-                    });
+                        await Task.Run(() => File.WriteAllText(saveDialog.FileName, umlCode));
+                        HideStatusNotification();
+
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = saveDialog.FileName,
+                            UseShellExecute = true
+                        });
+                    }
+                    else
+                    {
+                        string tempFilePath = await Task.Run(() => ExportPlantUmlDiagram(umlCode, format));
+
+                        File.Copy(tempFilePath, saveDialog.FileName, true);
+
+                        try { File.Delete(tempFilePath); } catch { }
+
+                        HideStatusNotification();
+
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = saveDialog.FileName,
+                            UseShellExecute = true
+                        });
+                    }
                 }
             }
             catch (Exception ex)
@@ -228,7 +242,6 @@ namespace PlantUMLEditor
             string umlFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.puml");
 
             string fileExtension = format;
-            if (format == "txt") fileExtension = "atxt";
 
             string outputFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.{fileExtension}");
 
@@ -325,6 +338,19 @@ namespace PlantUMLEditor
             ShowStatusNotification(message);
             await Task.Delay(durationMs);
             HideStatusNotification();
+        }
+
+        private void DiagramType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbDiagramType.SelectedItem != null)
+            {
+                string selectedDiagramType = (cmbDiagramType.SelectedItem as ComboBoxItem).Content.ToString();
+
+                if (PlantUmlTemplates.Templates.ContainsKey(selectedDiagramType))
+                {
+                    txtPlantUmlCode.Text = PlantUmlTemplates.Templates[selectedDiagramType];
+                }
+            }
         }
 
         private async void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)
