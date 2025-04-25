@@ -180,6 +180,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="Unesite PlantUML kod:" Grid.Row="0" Margin="0,0,0,5"/>
@@ -187,9 +188,11 @@
                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MaxHeight="300"
                  Grid.Row="1" Margin="0,0,0,10" />
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="Odaberite predložak:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <ComboBox x:Name="cmbDiagramType" Width="183" SelectionChanged="DiagramType_SelectionChanged">
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
+                            <ComboBox x:Name="cmbDiagramType" Width="193" SelectionChanged="DiagramType_SelectionChanged">
                                 <ComboBoxItem Content="Dijagram sekvenci"/>
                                 <ComboBoxItem Content="Dijagram slučajeva korištenja"/>
                                 <ComboBoxItem Content="Klasni dijagram"/>
@@ -203,10 +206,13 @@
                                 <ComboBoxItem Content="Ganttov dijagram"/>
                                 <ComboBoxItem Content="ER dijagram"/>
                             </ComboBox>
+
+                            <Button Content="Dodaj" Width="50" Margin="5,0,0,0" Click="AddTemplate_Click" ToolTip="Dodaj novi predložak"/>
+                            <Button Content="Ukloni" Width="50" Margin="5,0,0,0" Click="RemoveTemplate_Click" ToolTip="Ukloni odabrani predložak"/>
                         </StackPanel>
 
-                        <Button Content="Generiraj dijagram" Grid.Row="3" Click="GenerateDiagram_Click"
-                HorizontalAlignment="Right" Width="120" />
+                        <Button x:Name="btnGenerateDiagram" Content="Generiraj dijagram" Grid.Row="4" Click="GenerateDiagram_Click"
+                HorizontalAlignment="Right" Width="120" Margin="0,5,0,0" />
                     </Grid>
                 </TabItem>
 

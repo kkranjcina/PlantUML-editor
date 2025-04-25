@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace PlantUMLEditor
 {
@@ -211,5 +214,67 @@ namespace PlantUMLEditor
               "@enduml"
             }
         };
+
+        private static readonly string _templatesFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "PlantUMLEditor",
+        "templates.json");
+
+        public static void AddTemplate(string name, string content)
+        {
+            Templates[name] = content;
+            SaveTemplates();
+        }
+
+        public static void RemoveTemplate(string name)
+        {
+            if (Templates.ContainsKey(name))
+            {
+                Templates.Remove(name);
+                SaveTemplates();
+            }
+        }
+
+        public static void SaveTemplates()
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(_templatesFilePath);
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+
+                string json = JsonConvert.SerializeObject(Templates, Formatting.Indented);
+                File.WriteAllText(_templatesFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Greška prilikom spremanja predložaka: {ex.Message}",
+                    "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        public static void LoadTemplates()
+        {
+            try
+            {
+                if (File.Exists(_templatesFilePath))
+                {
+                    string json = File.ReadAllText(_templatesFilePath);
+                    Dictionary<string, string> loadedTemplates =
+                        JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+                    // Dodaj učitane predloške u postojeće
+                    foreach (var template in loadedTemplates)
+                    {
+                        Templates[template.Key] = template.Value;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Greška prilikom učitavanja predložaka: {ex.Message}",
+                    "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 }

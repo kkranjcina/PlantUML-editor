@@ -38,6 +38,26 @@ namespace PlantUMLEditor
             GetSolutionDirectory();
 
             Directory.CreateDirectory(Path.GetDirectoryName(_configFilePath));
+
+            PlantUmlTemplates.LoadTemplates();
+
+            foreach (var template in PlantUmlTemplates.Templates)
+            {
+                bool exists = false;
+                foreach (ComboBoxItem item in cmbDiagramType.Items)
+                {
+                    if (item.Content.ToString() == template.Key)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    cmbDiagramType.Items.Add(new ComboBoxItem { Content = template.Key });
+                }
+            }
         }
 
         private void GetSolutionDirectory()
@@ -82,6 +102,8 @@ namespace PlantUMLEditor
 
                 ShowStatusNotification("Generiranje u tijeku...");
 
+                btnGenerateDiagram.IsEnabled = false;
+
                 string diagramPath = await Task.Run(() => GeneratePlantUmlDiagram(umlCode));
 
                 HideStatusNotification();
@@ -107,6 +129,11 @@ namespace PlantUMLEditor
             catch (Exception ex)
             {
                 MessageBox.Show($"Došlo je do pogreške: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                HideStatusNotification();
+                btnGenerateDiagram.IsEnabled = true;
             }
         }
 
@@ -351,6 +378,105 @@ namespace PlantUMLEditor
                     txtPlantUmlCode.Text = PlantUmlTemplates.Templates[selectedDiagramType];
                 }
             }
+        }
+
+        private void AddTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            TemplateDialog dialog = new TemplateDialog("Moj predložak");
+            dialog.Owner = this;
+
+            bool? result = dialog.ShowDialog();
+
+            if (result == true)
+            {
+                string templateName = dialog.TemplateName;
+                string templateCode = dialog.TemplateCode;
+
+                if (PlantUmlTemplates.Templates.ContainsKey(templateName))
+                {
+                    MessageBoxResult overwriteResult = MessageBox.Show(
+                        $"Predložak s imenom '{templateName}' već postoji. Želite li ga zamijeniti?",
+                        "Predložak već postoji",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (overwriteResult != MessageBoxResult.Yes)
+                        return;
+                }
+
+                PlantUmlTemplates.AddTemplate(templateName, templateCode);
+
+                bool exists = false;
+                foreach (ComboBoxItem item in cmbDiagramType.Items)
+                {
+                    if (item.Content.ToString() == templateName)
+                    {
+                        exists = true;
+                        cmbDiagramType.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    ComboBoxItem newItem = new ComboBoxItem { Content = templateName };
+                    cmbDiagramType.Items.Add(newItem);
+                    cmbDiagramType.SelectedItem = newItem;
+                }
+            }
+        }
+
+        private void RemoveTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            if (cmbDiagramType.SelectedItem == null)
+            {
+                MessageBox.Show("Odaberite predložak koji želite ukloniti.",
+                    "Upozorenje", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string templateName = (cmbDiagramType.SelectedItem as ComboBoxItem).Content.ToString();
+
+            bool isDefaultTemplate = false;
+            foreach (string defaultTemplate in new[] {
+                "Dijagram sekvenci", "Dijagram slučajeva korištenja", "Klasni dijagram",
+                "Objektni dijagram", "Dijagram aktivnosti", "Komponentni dijagram",
+                "Dijagram raspoređivanja", "Dijagram stanja", "Dijagram vremena",
+                "Mentalna mapa", "Ganttov dijagram", "ER dijagram"
+            })
+            {
+                if (templateName == defaultTemplate)
+                {
+                    isDefaultTemplate = true;
+                    break;
+                }
+            }
+
+            if (isDefaultTemplate)
+            {
+                MessageBox.Show("Zadane predloške nije moguće ukloniti.",
+                    "Upozorenje", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                $"Jeste li sigurni da želite ukloniti predložak '{templateName}'?",
+                "Potvrda brisanja",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            PlantUmlTemplates.RemoveTemplate(templateName);
+
+            cmbDiagramType.Items.Remove(cmbDiagramType.SelectedItem);
+
+            if (cmbDiagramType.Items.Count > 0)
+                cmbDiagramType.SelectedIndex = 0;
+
+            MessageBox.Show($"Predložak '{templateName}' je uspješno uklonjen.",
+                "Predložak uklonjen", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private async void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)
