@@ -192,22 +192,10 @@
                             <TextBlock Text="Odaberite predložak:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         </StackPanel>
                         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10">
-                            <ComboBox x:Name="cmbDiagramType" Width="193" SelectionChanged="DiagramType_SelectionChanged">
-                                <ComboBoxItem Content="Dijagram sekvenci"/>
-                                <ComboBoxItem Content="Dijagram slučajeva korištenja"/>
-                                <ComboBoxItem Content="Klasni dijagram"/>
-                                <ComboBoxItem Content="Objektni dijagram"/>
-                                <ComboBoxItem Content="Dijagram aktivnosti"/>
-                                <ComboBoxItem Content="Komponentni dijagram"/>
-                                <ComboBoxItem Content="Dijagram raspoređivanja"/>
-                                <ComboBoxItem Content="Dijagram stanja"/>
-                                <ComboBoxItem Content="Dijagram vremena"/>
-                                <ComboBoxItem Content="Mentalna mapa"/>
-                                <ComboBoxItem Content="Ganttov dijagram"/>
-                                <ComboBoxItem Content="ER dijagram"/>
-                            </ComboBox>
+                            <ComboBox x:Name="cmbDiagramType" Width="139" SelectionChanged="DiagramType_SelectionChanged"> </ComboBox>
 
                             <Button Content="Dodaj" Width="50" Margin="5,0,0,0" Click="AddTemplate_Click" ToolTip="Dodaj novi predložak"/>
+                            <Button Content="Uredi" Width="50" Margin="5,0,0,0" Click="EditTemplate_Click" ToolTip="Dodaj novi predložak"/>
                             <Button Content="Ukloni" Width="50" Margin="5,0,0,0" Click="RemoveTemplate_Click" ToolTip="Ukloni odabrani predložak"/>
                         </StackPanel>
 

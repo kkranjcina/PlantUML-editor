@@ -14,11 +14,27 @@ namespace PlantUMLEditor
             txtTemplateName.Text = defaultName;
         }
 
+        public TemplateDialog(string defaultName, string templateCode)
+        {
+            InitializeComponent();
+
+            txtTemplateName.Text = defaultName;
+            txtTemplateCode.Text = templateCode;
+            TemplateCode = templateCode;
+        }
+
         private void btnSave_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtTemplateName.Text))
             {
                 MessageBox.Show("Molimo unesite ime predloška.", "Upozorenje",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtTemplateCode.Text))
+            {
+                MessageBox.Show("Molimo unesite kod predloška.", "Upozorenje",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }

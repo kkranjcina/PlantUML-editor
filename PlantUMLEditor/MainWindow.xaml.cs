@@ -36,27 +36,13 @@ namespace PlantUMLEditor
             spinnerRotation.BeginAnimation(RotateTransform.AngleProperty, spinnerAnimation);
 
             GetSolutionDirectory();
-
             Directory.CreateDirectory(Path.GetDirectoryName(_configFilePath));
 
-            PlantUmlTemplates.LoadTemplates();
+            PlantUmlTemplates.Initialize();
 
             foreach (var template in PlantUmlTemplates.Templates)
             {
-                bool exists = false;
-                foreach (ComboBoxItem item in cmbDiagramType.Items)
-                {
-                    if (item.Content.ToString() == template.Key)
-                    {
-                        exists = true;
-                        break;
-                    }
-                }
-
-                if (!exists)
-                {
-                    cmbDiagramType.Items.Add(new ComboBoxItem { Content = template.Key });
-                }
+                cmbDiagramType.Items.Add(new ComboBoxItem { Content = template.Key });
             }
         }
 
@@ -426,6 +412,51 @@ namespace PlantUMLEditor
             }
         }
 
+        private void EditTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            if (cmbDiagramType.SelectedItem == null)
+            {
+                MessageBox.Show("Odaberite predložak koji želite izmijeniti.",
+                    "Upozorenje", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string templateName = (cmbDiagramType.SelectedItem as ComboBoxItem).Content.ToString();
+            string currentCode = PlantUmlTemplates.Templates[templateName];
+
+            TemplateDialog dialog = new TemplateDialog(templateName, currentCode);
+            dialog.Owner = this;
+            bool? result = dialog.ShowDialog();
+
+            if (result == true)
+            {
+                string newName = dialog.TemplateName;
+                string newCode = dialog.TemplateCode;
+
+                if (newName != templateName)
+                {
+                    PlantUmlTemplates.RemoveTemplate(templateName);
+
+                    cmbDiagramType.Items.Remove(cmbDiagramType.SelectedItem);
+
+                    PlantUmlTemplates.AddTemplate(newName, newCode);
+
+                    ComboBoxItem newItem = new ComboBoxItem { Content = newName };
+                    cmbDiagramType.Items.Add(newItem);
+                    cmbDiagramType.SelectedItem = newItem;
+
+                    txtPlantUmlCode.Text = newCode;
+                    cmbDiagramType.Items.Refresh();
+                }
+                else
+                {
+                    PlantUmlTemplates.AddTemplate(templateName, newCode);
+                    txtPlantUmlCode.Text = newCode;
+                    cmbDiagramType.Items.Refresh();
+                }
+            }
+        }
+
         private void RemoveTemplate_Click(object sender, RoutedEventArgs e)
         {
             if (cmbDiagramType.SelectedItem == null)
@@ -436,28 +467,6 @@ namespace PlantUMLEditor
             }
 
             string templateName = (cmbDiagramType.SelectedItem as ComboBoxItem).Content.ToString();
-
-            bool isDefaultTemplate = false;
-            foreach (string defaultTemplate in new[] {
-                "Dijagram sekvenci", "Dijagram slučajeva korištenja", "Klasni dijagram",
-                "Objektni dijagram", "Dijagram aktivnosti", "Komponentni dijagram",
-                "Dijagram raspoređivanja", "Dijagram stanja", "Dijagram vremena",
-                "Mentalna mapa", "Ganttov dijagram", "ER dijagram"
-            })
-            {
-                if (templateName == defaultTemplate)
-                {
-                    isDefaultTemplate = true;
-                    break;
-                }
-            }
-
-            if (isDefaultTemplate)
-            {
-                MessageBox.Show("Zadane predloške nije moguće ukloniti.",
-                    "Upozorenje", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
 
             MessageBoxResult result = MessageBox.Show(
                 $"Jeste li sigurni da želite ukloniti predložak '{templateName}'?",
@@ -472,11 +481,7 @@ namespace PlantUMLEditor
 
             cmbDiagramType.Items.Remove(cmbDiagramType.SelectedItem);
 
-            if (cmbDiagramType.Items.Count > 0)
-                cmbDiagramType.SelectedIndex = 0;
-
-            MessageBox.Show($"Predložak '{templateName}' je uspješno uklonjen.",
-                "Predložak uklonjen", MessageBoxButton.OK, MessageBoxImage.Information);
+            txtPlantUmlCode.Text = string.Empty;
         }
 
         private async void SendChatGPTQuery_Click(object sender, RoutedEventArgs e)

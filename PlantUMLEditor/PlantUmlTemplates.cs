@@ -2,16 +2,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace PlantUMLEditor
 {
     internal class PlantUmlTemplates
     {
-        public static Dictionary<string, string> Templates = new Dictionary<string, string>
+        public static Dictionary<string, string> Templates { get; private set; } = new Dictionary<string, string>();
+
+        private static readonly string _templatesFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "PlantUMLEditor",
+            "templates.json");
+
+        private static readonly Dictionary<string, string> _defaultTemplates = new Dictionary<string, string>
         {
             { "Dijagram sekvenci",
               "@startuml\n" +
@@ -215,10 +219,31 @@ namespace PlantUMLEditor
             }
         };
 
-        private static readonly string _templatesFilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "PlantUMLEditor",
-        "templates.json");
+        public static void Initialize()
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(_templatesFilePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                if (!File.Exists(_templatesFilePath))
+                {
+                    File.WriteAllText(_templatesFilePath, JsonConvert.SerializeObject(_defaultTemplates, Formatting.Indented));
+                }
+
+                LoadTemplates();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Greška prilikom inicijalizacije predložaka: {ex.Message}",
+                    "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                Templates = new Dictionary<string, string>(_defaultTemplates);
+            }
+        }
 
         public static void AddTemplate(string name, string content)
         {
@@ -241,7 +266,9 @@ namespace PlantUMLEditor
             {
                 string directory = Path.GetDirectoryName(_templatesFilePath);
                 if (!Directory.Exists(directory))
+                {
                     Directory.CreateDirectory(directory);
+                }
 
                 string json = JsonConvert.SerializeObject(Templates, Formatting.Indented);
                 File.WriteAllText(_templatesFilePath, json);
@@ -260,19 +287,39 @@ namespace PlantUMLEditor
                 if (File.Exists(_templatesFilePath))
                 {
                     string json = File.ReadAllText(_templatesFilePath);
-                    Dictionary<string, string> loadedTemplates =
-                        JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    Templates = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
-                    // Dodaj učitane predloške u postojeće
-                    foreach (var template in loadedTemplates)
+                    if (Templates == null)
                     {
-                        Templates[template.Key] = template.Value;
+                        Templates = new Dictionary<string, string>(_defaultTemplates);
+                        SaveTemplates();
                     }
+                }
+                else
+                {
+                    Templates = new Dictionary<string, string>(_defaultTemplates);
+                    SaveTemplates();
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Greška prilikom učitavanja predložaka: {ex.Message}",
+                    "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                Templates = new Dictionary<string, string>(_defaultTemplates);
+            }
+        }
+
+        public static void ResetToDefaultTemplates()
+        {
+            try
+            {
+                Templates = new Dictionary<string, string>(_defaultTemplates);
+                SaveTemplates();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Greška prilikom resetiranja predložaka: {ex.Message}",
                     "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
