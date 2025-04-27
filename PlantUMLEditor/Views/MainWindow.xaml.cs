@@ -8,32 +8,30 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Newtonsoft.Json;
-using System.Security.Cryptography;
 using System.Windows.Controls;
 using Microsoft.Win32;
-using System.Windows.Media;
+using PlantUMLEditor.Services;
 
-namespace PlantUMLEditor
+namespace PlantUMLEditor.Views
 {
     public partial class MainWindow : Window
     {
         private string _plantUmlJarPath;
         private readonly string _outputDirectory = Path.Combine(Path.GetTempPath(), "PlantUML");
-        private System.Windows.Controls.Image _currentImage;
+        private Image _currentImage;
         private readonly string _configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PlantUMLEditor", "config.dat");
+        private StatusNotificationService _statusNotificationService;
+        private ApiKeyManager _apiKeyManager;
+        private SpinnerService _spinnerService;
 
         public MainWindow()
         {
             InitializeComponent();
-
-            var spinnerAnimation = new System.Windows.Media.Animation.DoubleAnimation
-            {
-                From = 0,
-                To = 360,
-                Duration = new Duration(TimeSpan.FromSeconds(1)),
-                RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever
-            };
-            spinnerRotation.BeginAnimation(RotateTransform.AngleProperty, spinnerAnimation);
+            
+            _statusNotificationService = new StatusNotificationService(statusNotification, statusText);
+            _apiKeyManager = new ApiKeyManager(_configFilePath);
+            _spinnerService = new SpinnerService(spinnerRotation);
+            _spinnerService.StartAnimation();
 
             GetSolutionDirectory();
             Directory.CreateDirectory(Path.GetDirectoryName(_configFilePath));
@@ -86,13 +84,11 @@ namespace PlantUMLEditor
                     _currentImage.Source = null;
                 }
 
-                ShowStatusNotification("Generiranje u tijeku...");
+                _statusNotificationService.ShowStatusNotification("Generiranje u tijeku...");
 
                 btnGenerateDiagram.IsEnabled = false;
 
-                string diagramPath = await Task.Run(() => GeneratePlantUmlDiagram(umlCode));
-
-                HideStatusNotification();
+                string diagramPath = await Task.Run(() => DiagramGenerator.GeneratePlantUmlDiagram(umlCode, _outputDirectory, _plantUmlJarPath));
 
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -104,7 +100,7 @@ namespace PlantUMLEditor
                 bitmapImage.EndInit();
 
                 DiagramCanvas.Children.Clear();
-                _currentImage = new System.Windows.Controls.Image
+                _currentImage = new Image
                 {
                     Source = bitmapImage,
                     Stretch = System.Windows.Media.Stretch.Uniform
@@ -118,46 +114,9 @@ namespace PlantUMLEditor
             }
             finally
             {
-                HideStatusNotification();
+                _statusNotificationService.HideStatusNotification();
                 btnGenerateDiagram.IsEnabled = true;
             }
-        }
-
-        private string GeneratePlantUmlDiagram(string umlCode)
-        {
-            Directory.CreateDirectory(_outputDirectory);
-
-            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            string umlFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.puml");
-            string outputFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.png");
-
-            File.WriteAllText(umlFilePath, umlCode);
-
-            Process process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "java",
-                    Arguments = $"-DPLANTUML_LIMIT_SIZE=8192 -jar \"{_plantUmlJarPath}\" \"{umlFilePath}\" -o \"{_outputDirectory}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-
-            if (!File.Exists(outputFilePath))
-            {
-                throw new Exception("Dijagram nije generiran. Detalji: " + error);
-            }
-
-            return outputFilePath;
         }
 
         private async void ExportDiagram_Click(object sender, RoutedEventArgs e)
@@ -204,12 +163,11 @@ namespace PlantUMLEditor
                 if (result == true)
                 {
                     btnExport.IsEnabled = false;
-                    ShowStatusNotification("Izvoz u tijeku...");
+                    _statusNotificationService.ShowStatusNotification("Izvoz u tijeku...");
 
                     if (format == "txt")
                     {
                         await Task.Run(() => File.WriteAllText(saveDialog.FileName, umlCode));
-                        HideStatusNotification();
 
                         Process.Start(new ProcessStartInfo
                         {
@@ -219,13 +177,11 @@ namespace PlantUMLEditor
                     }
                     else
                     {
-                        string tempFilePath = await Task.Run(() => ExportPlantUmlDiagram(umlCode, format));
+                        string tempFilePath = await Task.Run(() => DiagramGenerator.ExportPlantUmlDiagram(umlCode, format, _outputDirectory, _plantUmlJarPath));
 
                         File.Copy(tempFilePath, saveDialog.FileName, true);
 
                         try { File.Delete(tempFilePath); } catch { }
-
-                        HideStatusNotification();
 
                         Process.Start(new ProcessStartInfo
                         {
@@ -237,120 +193,14 @@ namespace PlantUMLEditor
             }
             catch (Exception ex)
             {
-                HideStatusNotification();
 
                 MessageBox.Show($"Došlo je do pogreške prilikom izvoza: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                _statusNotificationService.HideStatusNotification();
                 btnExport.IsEnabled = true;
             }
-        }
-
-        private string ExportPlantUmlDiagram(string umlCode, string format)
-        {
-            Directory.CreateDirectory(_outputDirectory);
-
-            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            string umlFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.puml");
-
-            string fileExtension = format;
-
-            string outputFilePath = Path.Combine(_outputDirectory, $"diagram_{timestamp}.{fileExtension}");
-
-            File.WriteAllText(umlFilePath, umlCode);
-
-            string formatArg = format == "png" ? "" : $"-t{format}";
-
-            string plantUmlDir = Path.GetDirectoryName(_plantUmlJarPath);
-
-            ProcessStartInfo startInfo;
-
-            if (format == "pdf")
-            {
-                string classpath = $"\"{_plantUmlJarPath}\"";
-
-                foreach (string jarFile in Directory.GetFiles(plantUmlDir, "*.jar"))
-                {
-                    if (Path.GetFileName(jarFile) != Path.GetFileName(_plantUmlJarPath))
-                    {
-                        classpath += $";\"{jarFile}\"";
-                    }
-                }
-
-                startInfo = new ProcessStartInfo
-                {
-                    FileName = "java",
-                    Arguments = $"-Djava.awt.headless=true -cp {classpath} net.sourceforge.plantuml.Run {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-            }
-            else
-            {
-                startInfo = new ProcessStartInfo
-                {
-                    FileName = "java",
-                    Arguments = $"-jar \"{_plantUmlJarPath}\" {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-            }
-
-            Process process = new Process { StartInfo = startInfo };
-
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            if (!File.Exists(outputFilePath))
-            {
-                throw new Exception($"Dijagram nije generiran. Detalji: {error}");
-            }
-
-            return outputFilePath;
-        }
-
-        private void ShowStatusNotification(string message)
-        {
-            statusText.Text = message;
-            statusNotification.Visibility = Visibility.Visible;
-
-            statusNotification.Opacity = 0;
-            var fadeInAnimation = new System.Windows.Media.Animation.DoubleAnimation
-            {
-                From = 0,
-                To = 1,
-                Duration = new Duration(TimeSpan.FromMilliseconds(300))
-            };
-            statusNotification.BeginAnimation(OpacityProperty, fadeInAnimation);
-        }
-
-        private void HideStatusNotification()
-        {
-            var fadeOutAnimation = new System.Windows.Media.Animation.DoubleAnimation
-            {
-                From = 1,
-                To = 0,
-                Duration = new Duration(TimeSpan.FromMilliseconds(300))
-            };
-            fadeOutAnimation.Completed += (s, e) =>
-            {
-                statusNotification.Visibility = Visibility.Collapsed;
-            };
-            statusNotification.BeginAnimation(OpacityProperty, fadeOutAnimation);
-        }
-
-        private async Task ShowTemporaryStatusNotification(string message, int durationMs = 10000)
-        {
-            ShowStatusNotification(message);
-            await Task.Delay(durationMs);
-            HideStatusNotification();
         }
 
         private void DiagramType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -499,7 +349,7 @@ namespace PlantUMLEditor
                 btnSendQuery.IsEnabled = false;
                 txtChatResponse.Text = "Učitavanje odgovora...";
 
-                string apiKey = GetApiKey();
+                string apiKey = _apiKeyManager.GetApiKey();
 
                 if (string.IsNullOrEmpty(apiKey))
                 {
@@ -535,7 +385,7 @@ namespace PlantUMLEditor
                     return;
                 }
 
-                SaveEncryptedApiKey(apiKey);
+                _apiKeyManager.SaveApiKey(apiKey);
 
                 txtApiKeyStatus.Text = "API ključ je uspješno spremljen!";
                 txtApiKeyStatus.Visibility = Visibility.Visible;
@@ -545,58 +395,6 @@ namespace PlantUMLEditor
             catch (Exception ex)
             {
                 MessageBox.Show($"Pogreška pri spremanju API ključa: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SaveEncryptedApiKey(string apiKey)
-        {
-            byte[] entropy = new byte[16];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(entropy);
-            }
-
-            byte[] encryptedData = ProtectedData.Protect(
-                Encoding.UTF8.GetBytes(apiKey),
-                entropy,
-                DataProtectionScope.CurrentUser);
-
-            using (var fs = new FileStream(_configFilePath, FileMode.Create))
-            using (var bw = new BinaryWriter(fs))
-            {
-                bw.Write(entropy.Length);
-                bw.Write(entropy);
-                bw.Write(encryptedData.Length);
-                bw.Write(encryptedData);
-            }
-        }
-
-        private string GetApiKey()
-        {
-            try
-            {
-                if (!File.Exists(_configFilePath))
-                    return null;
-
-                using (var fs = new FileStream(_configFilePath, FileMode.Open))
-                using (var br = new BinaryReader(fs))
-                {
-                    int entropyLength = br.ReadInt32();
-                    byte[] entropy = br.ReadBytes(entropyLength);
-                    int encryptedDataLength = br.ReadInt32();
-                    byte[] encryptedData = br.ReadBytes(encryptedDataLength);
-
-                    byte[] decryptedData = ProtectedData.Unprotect(
-                        encryptedData,
-                        entropy,
-                        DataProtectionScope.CurrentUser);
-
-                    return Encoding.UTF8.GetString(decryptedData);
-                }
-            }
-            catch
-            {
-                return null;
             }
         }
 

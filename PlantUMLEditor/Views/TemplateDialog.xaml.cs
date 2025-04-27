@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace PlantUMLEditor
+namespace PlantUMLEditor.Views
 {
     public partial class TemplateDialog : Window
     {
