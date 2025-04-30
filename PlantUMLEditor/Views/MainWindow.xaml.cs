@@ -18,11 +18,17 @@ namespace PlantUMLEditor.Views
     {
         private string _plantUmlJarPath;
         private readonly string _outputDirectory = Path.Combine(Path.GetTempPath(), "PlantUML");
-        private Image _currentImage;
         private readonly string _configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PlantUMLEditor", "config.dat");
         private StatusNotificationService _statusNotificationService;
         private ApiKeyManager _apiKeyManager;
         private SpinnerService _spinnerService;
+
+        private const double ZoomStep = 0.1;
+        private const double MaxZoom = 3.5;
+        private const double MinZoom = 0.4;
+        private Point _scrollStartPoint;
+        private Point _scrollStartOffset;
+        private bool _isDragging = false;
 
         public MainWindow()
         {
@@ -79,11 +85,6 @@ namespace PlantUMLEditor.Views
                     return;
                 }
 
-                if (_currentImage != null)
-                {
-                    _currentImage.Source = null;
-                }
-
                 _statusNotificationService.ShowStatusNotification("Generiranje u tijeku...");
 
                 btnGenerateDiagram.IsEnabled = false;
@@ -99,14 +100,9 @@ namespace PlantUMLEditor.Views
                 bitmapImage.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
                 bitmapImage.EndInit();
 
-                DiagramCanvas.Children.Clear();
-                _currentImage = new Image
-                {
-                    Source = bitmapImage,
-                    Stretch = System.Windows.Media.Stretch.Uniform
-                };
-
-                DiagramCanvas.Children.Add(_currentImage);
+                DiagramImage.Source = bitmapImage;
+                DiagramImageScale.ScaleX = 1;
+                DiagramImageScale.ScaleY = 1;
             }
             catch (Exception ex)
             {
@@ -118,6 +114,66 @@ namespace PlantUMLEditor.Views
                 btnGenerateDiagram.IsEnabled = true;
             }
         }
+
+        private void DiagramImage_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            if (DiagramImage.Source == null) return;
+
+            double zoom = e.Delta > 0 ? (1 + ZoomStep) : (1 - ZoomStep);
+            double newScale = DiagramImageScale.ScaleX * zoom;
+
+            if (newScale < MinZoom) newScale = MinZoom;
+            if (newScale > MaxZoom) newScale = MaxZoom;
+
+            var position = e.GetPosition(DiagramImage);
+
+            DiagramImageScale.ScaleX = newScale;
+            DiagramImageScale.ScaleY = newScale;
+
+            var scrollViewer = DiagramScrollViewer;
+            if (scrollViewer != null && DiagramImage.ActualWidth > 0 && DiagramImage.ActualHeight > 0)
+            {
+                double relativeX = position.X / DiagramImage.ActualWidth;
+                double relativeY = position.Y / DiagramImage.ActualHeight;
+
+                double targetX = (DiagramImage.ActualWidth * newScale) * relativeX - scrollViewer.ViewportWidth / 2;
+                double targetY = (DiagramImage.ActualHeight * newScale) * relativeY - scrollViewer.ViewportHeight / 2;
+
+                scrollViewer.ScrollToHorizontalOffset(targetX);
+                scrollViewer.ScrollToVerticalOffset(targetY);
+            }
+
+            e.Handled = true;
+        }
+
+        private void DiagramImage_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (DiagramImage.Source == null) return;
+
+            _isDragging = true;
+            _scrollStartPoint = e.GetPosition(DiagramScrollViewer);
+            _scrollStartOffset = new Point(DiagramScrollViewer.HorizontalOffset, DiagramScrollViewer.VerticalOffset);
+            DiagramImage.CaptureMouse();
+        }
+
+        private void DiagramImage_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_isDragging && DiagramImage.IsMouseCaptured)
+            {
+                Point currentPoint = e.GetPosition(DiagramScrollViewer);
+                double dX = currentPoint.X - _scrollStartPoint.X;
+                double dY = currentPoint.Y - _scrollStartPoint.Y;
+                DiagramScrollViewer.ScrollToHorizontalOffset(_scrollStartOffset.X - dX);
+                DiagramScrollViewer.ScrollToVerticalOffset(_scrollStartOffset.Y - dY);
+            }
+        }
+
+        private void DiagramImage_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            _isDragging = false;
+            DiagramImage.ReleaseMouseCapture();
+        }
+
 
         private async void ExportDiagram_Click(object sender, RoutedEventArgs e)
         {

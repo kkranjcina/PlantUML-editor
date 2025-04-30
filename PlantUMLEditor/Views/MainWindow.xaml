@@ -151,8 +151,24 @@
         </Grid.ColumnDefinitions>
 
         <!-- Prostor za prikaz dijagrama -->
-        <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" >
-            <Canvas Name="DiagramCanvas" Background="White"/>
+        <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Height="600" VerticalAlignment="Top" Margin="5,5,5,0">
+            <ScrollViewer x:Name="DiagramScrollViewer"
+                  HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto"
+                  PreviewMouseWheel="DiagramImage_MouseWheel">
+                <Grid>
+                    <Image x:Name="DiagramImage"
+                   RenderTransformOrigin="0.5,0.5"
+                   Stretch="None"
+                   PreviewMouseLeftButtonDown="DiagramImage_PreviewMouseLeftButtonDown"
+                   PreviewMouseMove="DiagramImage_PreviewMouseMove"
+                   PreviewMouseLeftButtonUp="DiagramImage_PreviewMouseLeftButtonUp">
+                        <Image.RenderTransform>
+                            <ScaleTransform x:Name="DiagramImageScale" ScaleX="1" ScaleY="1"/>
+                        </Image.RenderTransform>
+                    </Image>
+                </Grid>
+            </ScrollViewer>
         </Border>
 
         <StackPanel Orientation="Horizontal" Margin="0,10,30,30" HorizontalAlignment="Right" VerticalAlignment="Bottom">

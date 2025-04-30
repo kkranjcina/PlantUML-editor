@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PlantUMLEditor"
         mc:Ignorable="d"
-        Title="TemplateDialog" Height="450" Width="600" WindowStartupLocation="CenterScreen">
+        Title="Dodavanje predloška" Height="450" Width="600" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Background" Value="#f0f0f0"/>
