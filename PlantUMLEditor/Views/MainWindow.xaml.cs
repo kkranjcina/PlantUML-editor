@@ -412,10 +412,11 @@ namespace PlantUMLEditor.Views
                     messages = new[]
                     {
                         new { role = "system", content = "Generiraj samo PlantUML kod. Ne dodavaj nikakva objašnjenja, " +
-                        "komentare, uvode ili pitanja. Odgovori samo s validnim PlantUML kodom koji počinje s @startuml i završava s @enduml." },
+                        "komentare, uvode ili pitanja. Odgovori samo s validnim PlantUML kodom." },
                         new { role = "user", content = prompt }
                     },
-                    max_tokens = 1000
+                    max_tokens = 1000,
+                    temperature = 0.7
                 };
 
                 var content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
