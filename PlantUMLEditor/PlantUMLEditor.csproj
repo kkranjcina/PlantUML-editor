@@ -78,6 +78,10 @@
     <Compile Include="Views\TemplateDialog.xaml.cs">
       <DependentUpon>TemplateDialog.xaml</DependentUpon>
     </Compile>
+    <Page Include="Views\Design.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
