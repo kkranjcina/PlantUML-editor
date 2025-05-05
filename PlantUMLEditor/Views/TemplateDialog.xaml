@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PlantUMLEditor"
         mc:Ignorable="d"
+        Icon="../logo.ico"
         Title="Dodavanje predloška" Height="450" Width="600" WindowStartupLocation="CenterScreen">
 
     <Grid Margin="10">
@@ -15,7 +16,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Ime predloška:" Grid.Row="0" Margin="0,0,0,5"/>
+        <TextBlock Text="Naziv predloška:" Grid.Row="0" Margin="0,0,0,5"/>
         <TextBox x:Name="txtTemplateName" Grid.Row="1" Margin="0,0,0,10"/>
 
         <GroupBox Header="PlantUML kod predloška" Grid.Row="2" Margin="0,0,0,10">

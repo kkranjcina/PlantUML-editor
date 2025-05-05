@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PlantUMLEditor"
         mc:Ignorable="d"
+        Icon="../logo.ico"
         Title="PlantUML Editor" Height="720" Width="1380" WindowStartupLocation="CenterScreen">
 
     <Grid Background="{StaticResource BackgroundBrush}">
