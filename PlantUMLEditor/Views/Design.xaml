@@ -22,15 +22,13 @@
 
     <!-- Fonts -->
     <FontFamily x:Key="PrimaryFontFamily">Segoe UI</FontFamily>
-    <sys:Double x:Key="PrimaryFontSize">14</sys:Double>
-    <sys:Double x:Key="SecondaryFontSize">10</sys:Double>
 
     <!-- Button Style -->
     <Style TargetType="Button">
         <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource SecondaryFontSize}"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="10,5"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -65,7 +63,7 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -84,7 +82,6 @@
     <!-- TextBlock Style -->
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
     </Style>
 
     <!-- PasswordBox Style -->
@@ -95,7 +92,7 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="PasswordBox">
@@ -119,7 +116,7 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
@@ -179,7 +176,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -208,7 +205,6 @@
     <!-- TabControl Style -->
     <Style TargetType="TabControl">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabControl">
@@ -232,7 +228,7 @@
     <!-- TabItem Style -->
     <Style TargetType="TabItem">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource PrimaryFontSize}"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="Padding" Value="12,6"/>
         <Setter Property="Background" Value="{StaticResource SecondaryBackgroundBrush}"/>
