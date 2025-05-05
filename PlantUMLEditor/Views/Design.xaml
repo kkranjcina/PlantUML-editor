@@ -23,7 +23,7 @@
     <!-- Fonts -->
     <FontFamily x:Key="PrimaryFontFamily">Segoe UI</FontFamily>
     <sys:Double x:Key="PrimaryFontSize">14</sys:Double>
-    <sys:Double x:Key="SecondaryFontSize">12</sys:Double>
+    <sys:Double x:Key="SecondaryFontSize">10</sys:Double>
 
     <!-- Button Style -->
     <Style TargetType="Button">
@@ -155,7 +155,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1"
-                            CornerRadius="4"
+                            CornerRadius="0,0,5,5"
                             Margin="0,2,0,0"
                             MinWidth="120">
                                 <ScrollViewer MaxHeight="200">
@@ -218,7 +218,7 @@
                                   Margin="0,0,0,8"/>
                         <Border BorderBrush="{StaticResource BorderBrushColor}"
                                 BorderThickness="1"
-                                CornerRadius="6"
+                                CornerRadius="0,0,5,5"
                                 Background="{StaticResource BackgroundBrush}"
                                 Margin="0,32,0,0">
                             <ContentPresenter ContentSource="SelectedContent" Margin="10"/>
@@ -238,7 +238,6 @@
         <Setter Property="Background" Value="{StaticResource SecondaryBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrushColor}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Margin" Value="1,0,1,0"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
@@ -246,7 +245,7 @@
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="5"
+                    CornerRadius="5,5,0,0"
                     Padding="{TemplateBinding Padding}">
                         <ContentPresenter x:Name="ContentSite"
                                   VerticalAlignment="Center"
@@ -255,10 +254,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="#888"/>

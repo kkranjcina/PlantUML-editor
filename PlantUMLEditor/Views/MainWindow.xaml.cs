@@ -74,6 +74,20 @@ namespace PlantUMLEditor.Views
             }
         }
 
+        private void txtPlantUmlCode_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            txtPlantUmlPlaceholder.Visibility = string.IsNullOrEmpty(txtPlantUmlCode.Text)
+                ? Visibility.Visible
+                : Visibility.Hidden;
+        }
+
+        private void txtChatInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            txtChatPlaceholder.Visibility = string.IsNullOrEmpty(txtChatInput.Text)
+                ? Visibility.Visible
+                : Visibility.Hidden;
+        }
+
         private async void GenerateDiagram_Click(object sender, RoutedEventArgs e)
         {
             try

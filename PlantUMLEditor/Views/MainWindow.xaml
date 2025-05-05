@@ -36,7 +36,6 @@
         </Border>
 
         <StackPanel Orientation="Horizontal" Margin="0,10,30,30" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <TextBlock Text="Izvoz dijagrama:" VerticalAlignment="Center" Margin="0,0,10,5"/>
             <ComboBox x:Name="cmbExportFormat" Width="120" SelectedIndex="0">
                 <ComboBoxItem Content="PNG"/>
                 <ComboBoxItem Content="SVG"/>
@@ -60,44 +59,84 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="Unesite PlantUML kod:" Grid.Row="0" Margin="0,0,0,5"/>
-                        <TextBox x:Name="txtPlantUmlCode" AcceptsReturn="True" TextWrapping="Wrap"
-                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MaxHeight="300"
-                                 Grid.Row="1" Margin="0,0,0,10"/>
+                        <TextBlock Text="Dijagram generator" Grid.Row="0" Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold"/>
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,5">
-                            <TextBlock Text="Odaberite predložak:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox x:Name="txtPlantUmlCode" 
+                                 Grid.Row="1" 
+                                 AcceptsReturn="True" 
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto" 
+                                 HorizontalScrollBarVisibility="Auto" 
+                                 MaxHeight="300"
+                                 Margin="0,0,0,0" 
+                                 VerticalContentAlignment="Center" 
+                                 TextChanged="txtPlantUmlCode_TextChanged"/>
+                        <TextBlock x:Name="txtPlantUmlPlaceholder"
+                                   Grid.Row="1"
+                                   Text="Unesite PlantUML kod ovdje..."
+                                   Foreground="Gray"
+                                   Opacity="0.5"
+                                   IsHitTestVisible="False"
+                                   VerticalAlignment="Center"
+                                   Margin="9,0,0,0"/>
+
+                        <Button x:Name="btnGenerateDiagram" Content="Generiraj dijagram" Grid.Row="2" Width="150" Height="25" HorizontalAlignment="Right" Margin="0,10,0,5" Click="GenerateDiagram_Click"/>
+
+                        <Separator Margin="0,16" Width="350" HorizontalAlignment="Center" Opacity="0.4" Grid.Row="3"/>
+
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,5">
+                            <TextBlock Text="Predlošci" VerticalAlignment="Center" Margin="0,0,0,5" FontSize="16" FontWeight="SemiBold"/>
                         </StackPanel>
-                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+                        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
                             <ComboBox x:Name="cmbDiagramType" Width="158" Height="25" SelectionChanged="DiagramType_SelectionChanged"/>
                             <Button Content="Dodaj" Width="55" Height="25" Margin="5,0,0,0" ToolTip="Dodaj novi predložak" Click="AddTemplate_Click"/>
                             <Button Content="Uredi" Width="55" Height="25" Margin="5,0,0,0" ToolTip="Uredi predložak" Click="EditTemplate_Click"/>
                             <Button Content="Ukloni" Width="55" Height="25" Margin="5,0,0,0" ToolTip="Ukloni predložak" Click="RemoveTemplate_Click"/>
                         </StackPanel>
-
-                        <Button x:Name="btnGenerateDiagram" Content="Generiraj dijagram" Grid.Row="4" Width="150" Height="25" HorizontalAlignment="Right" Click="GenerateDiagram_Click"/>
                     </Grid>
                 </TabItem>
 
                 <TabItem Header="ChatGPT">
-                    <StackPanel Margin="10">
-                        <TextBlock Text="Upit za ChatGPT:" Margin="0,0,0,5"/>
-                        <TextBox x:Name="txtChatInput" AcceptsReturn="True" TextWrapping="Wrap"
-                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MaxHeight="300"/>
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="ChatGPT razgovor" Grid.Row="0" Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtChatInput" 
+                                 Grid.Row="1" 
+                                 AcceptsReturn="True" 
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto" 
+                                 HorizontalScrollBarVisibility="Auto" 
+                                 MaxHeight="300"
+                                 TextChanged="txtChatInput_TextChanged"/>
+                        <TextBlock x:Name="txtChatPlaceholder"
+                                   Text="Unesite upit ovdje..."
+                                   Grid.Row="1"
+                                   Foreground="Gray"
+                                   Opacity="0.5"
+                                   IsHitTestVisible="False"
+                                   VerticalAlignment="Center"
+                                   Margin="9,0,0,0"/>
 
-                        <Button x:Name="btnSendQuery" Content="Pošalji upit" Margin="0,10,0,0" Width="100" Height="25" HorizontalAlignment="Right" Click="SendChatGPTQuery_Click"/>
+                        <Button x:Name="btnSendQuery" Grid.Row="2" Content="Pošalji upit" Margin="0,10,0,0" Width="100" Height="25" HorizontalAlignment="Right" Click="SendChatGPTQuery_Click"/>
 
-                        <TextBlock Text="Odgovor ChatGPT-a:" Margin="0,20,0,5" FontWeight="Bold"/>
-                        <TextBox x:Name="txtChatResponse" AcceptsReturn="True" TextWrapping="Wrap"
+                        <TextBlock Text="Odgovor:" Grid.Row="3" Margin="0,20,0,5" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtChatResponse" Grid.Row="4" AcceptsReturn="True" TextWrapping="Wrap"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True" MaxHeight="300"/>
-                    </StackPanel>
+                    </Grid>
                 </TabItem>
 
                 <TabItem Header="Postavke">
                     <StackPanel Margin="10">
-                        <TextBlock Text="OpenAI API ključ:" Margin="0,10,0,5"/>
+                        <TextBlock Text="OpenAI API ključ" Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold"/>
                         <PasswordBox x:Name="txtApiKey" Margin="0,0,0,10"/>
                         <Button Content="Spremi API ključ" Width="140" Height="25" HorizontalAlignment="Right" Click="SaveApiKey_Click"/>
                         <TextBlock x:Name="txtApiKeyStatus" Margin="0,10,0,0" Foreground="Green" Visibility="Collapsed"/>
