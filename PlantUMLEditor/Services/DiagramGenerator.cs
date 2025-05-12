@@ -21,7 +21,7 @@ namespace PlantUMLEditor.Services
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "java",
-                    Arguments = $"-DPLANTUML_LIMIT_SIZE=8192 -jar \"{_plantUmlJarPath}\" \"{umlFilePath}\" -o \"{_outputDirectory}\"",
+                    Arguments = $"-DPLANTUML_LIMIT_SIZE=8192 -jar \"{_plantUmlJarPath}\" -charset UTF-8 \"{umlFilePath}\" -o \"{_outputDirectory}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -77,7 +77,7 @@ namespace PlantUMLEditor.Services
                 startInfo = new ProcessStartInfo
                 {
                     FileName = "java",
-                    Arguments = $"-Djava.awt.headless=true -cp {classpath} net.sourceforge.plantuml.Run {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
+                    Arguments = $"-Djava.awt.headless=true -cp {classpath} net.sourceforge.plantuml.Run -charset UTF-8 {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -89,7 +89,7 @@ namespace PlantUMLEditor.Services
                 startInfo = new ProcessStartInfo
                 {
                     FileName = "java",
-                    Arguments = $"-jar \"{_plantUmlJarPath}\" {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
+                    Arguments = $"-jar \"{_plantUmlJarPath}\" -charset UTF-8 {formatArg} \"{umlFilePath}\" -o \"{_outputDirectory}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

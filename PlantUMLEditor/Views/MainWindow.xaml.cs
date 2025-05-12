@@ -237,7 +237,7 @@ namespace PlantUMLEditor.Views
 
                     if (format == "txt")
                     {
-                        await Task.Run(() => File.WriteAllText(saveDialog.FileName, umlCode));
+                        await Task.Run(() => File.WriteAllText(saveDialog.FileName, umlCode, Encoding.UTF8));
 
                         Process.Start(new ProcessStartInfo
                         {
