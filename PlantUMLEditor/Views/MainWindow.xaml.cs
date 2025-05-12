@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http;
 using System.Text;
@@ -16,7 +15,7 @@ namespace PlantUMLEditor.Views
 {
     public partial class MainWindow : Window
     {
-        private string _plantUmlJarPath;
+        private string _plantUmlJarPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jarFiles", "plantuml-1.2025.2.jar");
         private readonly string _outputDirectory = Path.Combine(Path.GetTempPath(), "PlantUML");
         private readonly string _configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PlantUMLEditor", "config.dat");
         private StatusNotificationService _statusNotificationService;
@@ -39,7 +38,6 @@ namespace PlantUMLEditor.Views
             _spinnerService = new SpinnerService(spinnerRotation);
             _spinnerService.StartAnimation();
 
-            GetSolutionDirectory();
             Directory.CreateDirectory(Path.GetDirectoryName(_configFilePath));
 
             PlantUmlTemplates.Initialize();
@@ -47,30 +45,6 @@ namespace PlantUMLEditor.Views
             foreach (var template in PlantUmlTemplates.Templates)
             {
                 cmbDiagramType.Items.Add(new ComboBoxItem { Content = template.Key });
-            }
-        }
-
-        private void GetSolutionDirectory()
-        {
-            string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string solutionDirectory = "";
-
-            while (!string.IsNullOrEmpty(currentDirectory))
-            {
-                if (Directory.GetFiles(currentDirectory, "*.sln").Any())
-                {
-                    solutionDirectory = currentDirectory;
-                    break;
-                }
-
-                currentDirectory = Directory.GetParent(currentDirectory)?.FullName;
-            }
-
-            _plantUmlJarPath = Path.Combine(solutionDirectory, "jarFiles", "plantuml-1.2025.2.jar");
-
-            if (!File.Exists(_plantUmlJarPath))
-            {
-                MessageBox.Show($"Datoteka PlantUML nije pronađena na lokaciji: {_plantUmlJarPath}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
