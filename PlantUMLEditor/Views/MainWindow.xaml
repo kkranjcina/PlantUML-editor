@@ -111,6 +111,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Text="ChatGPT razgovor" Grid.Row="0" Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtChatInput" 
@@ -136,6 +137,8 @@
                         <TextBlock Text="Odgovor:" Grid.Row="3" Margin="0,20,0,5" FontSize="16" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtChatResponse" Grid.Row="4" AcceptsReturn="True" TextWrapping="Wrap"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True" MaxHeight="200"/>
+                        <Button x:Name="btnResetChat" Grid.Row="5" Content="Resetiraj razgovor" Margin="0,10,0,0" Width="120" Height="25" HorizontalAlignment="Right" Click="btnResetChat_Click"/>
+
                     </Grid>
                 </TabItem>
 

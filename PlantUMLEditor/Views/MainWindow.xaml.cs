@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using Newtonsoft.Json;
+using PlantUMLEditor.Services;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http.Headers;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using Newtonsoft.Json;
 using System.Windows.Controls;
-using Microsoft.Win32;
-using PlantUMLEditor.Services;
 
 namespace PlantUMLEditor.Views
 {
@@ -21,6 +22,7 @@ namespace PlantUMLEditor.Views
         private StatusNotificationService _statusNotificationService;
         private ApiKeyManager _apiKeyManager;
         private SpinnerService _spinnerService;
+        private List<object> _conversationHistory;
 
         private const double ZoomStep = 0.1;
         private const double MaxZoom = 3.5;
@@ -46,6 +48,11 @@ namespace PlantUMLEditor.Views
             {
                 cmbDiagramType.Items.Add(new ComboBoxItem { Content = template.Key });
             }
+
+            _conversationHistory = new List<object>
+            {
+                new { role = "system", content = "Ti si asistent koji pomaže s kreiranjem i analizom PlantUML dijagrama te pomažeš s generiranjem PlantUML koda. Neka objašnjenja budu kratka i jasna." }
+            };
         }
 
         private void txtPlantUmlCode_TextChanged(object sender, TextChangedEventArgs e)
@@ -382,7 +389,7 @@ namespace PlantUMLEditor.Views
         {
             try
             {
-                string input = txtChatInput.Text;
+                string input = txtChatInput.Text.Trim();
 
                 if (string.IsNullOrWhiteSpace(input))
                 {
@@ -450,15 +457,12 @@ namespace PlantUMLEditor.Views
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
+                _conversationHistory.Add(new { role = "user", content = prompt });
+
                 var requestData = new
                 {
                     model = "gpt-3.5-turbo",
-                    messages = new[]
-                    {
-                        new { role = "system", content = "Generiraj samo PlantUML kod. Ne dodavaj nikakva objašnjenja, " +
-                        "komentare, uvode ili pitanja. Odgovori samo s validnim PlantUML kodom." },
-                        new { role = "user", content = prompt }
-                    },
+                    messages = _conversationHistory,
                     max_tokens = 1000,
                     temperature = 0.7
                 };
@@ -474,8 +478,22 @@ namespace PlantUMLEditor.Views
                 }
 
                 dynamic jsonResponse = JsonConvert.DeserializeObject(responseContent);
-                return jsonResponse.choices[0].message.content.ToString();
+                string reply = jsonResponse.choices[0].message.content.ToString();
+
+                _conversationHistory.Add(new { role = "assistant", content = reply });
+
+                return reply;
             }
+        }
+
+        private void btnResetChat_Click(object sender, RoutedEventArgs e)
+        {
+            _conversationHistory = new List<object>
+            {
+                new { role = "system", content = "Ti si asistent koji pomaže s kreiranjem i analizom PlantUML dijagrama te pomažeš s generiranjem PlantUML koda. Neka objašnjenja budu kratka i jasna." }
+            };
+
+            txtChatResponse.Clear();
         }
     }
 }
