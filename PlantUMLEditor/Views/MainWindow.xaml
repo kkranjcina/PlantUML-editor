@@ -160,8 +160,8 @@
 
                 <TabItem Header="API ključ" Width="130">
                     <StackPanel Margin="10">
-                        <TextBlock Text="OpenAI API ključ" Margin="0,0,0,10" FontSize="16" FontWeight="SemiBold"/>
-                        <PasswordBox x:Name="txtApiKey" Margin="0,0,0,10" FontSize="12"/>
+                        <TextBlock Text="OpenAI API ključ" Margin="0,0,0,15" FontSize="16" FontWeight="SemiBold"/>
+                        <PasswordBox x:Name="txtApiKey" Margin="0,0,0,15" FontSize="12"/>
                         <Button Content="Spremi API ključ" Width="140" Height="25" HorizontalAlignment="Right" Click="SaveApiKey_Click"/>
                         <TextBlock x:Name="txtApiKeyStatus" Margin="0,10,0,0" Foreground="Green" Visibility="Collapsed"/>
                     </StackPanel>
