@@ -1,6 +1,10 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:conv="clr-namespace:PlantUMLEditor.Converters">
+
+    <conv:RoleToColorConverter x:Key="RoleToColorConverter"/>
+    <conv:RoleToAlignmentConverter x:Key="RoleToAlignmentConverter"/>
 
     <!-- Colors -->
     <Color x:Key="PrimaryColor">#547792</Color>

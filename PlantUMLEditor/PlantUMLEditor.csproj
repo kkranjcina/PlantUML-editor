@@ -86,6 +86,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\RoleToAlignmentConverter.cs" />
+    <Compile Include="Converters\RoleToColorConverter.cs" />
+    <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Services\ApiKeyManager.cs" />
     <Compile Include="Services\DiagramGenerator.cs" />
     <Compile Include="Services\SpinnerService.cs" />

@@ -1,8 +1,11 @@
 ﻿using Microsoft.Win32;
 using Newtonsoft.Json;
+using PlantUMLEditor.Converters;
+using PlantUMLEditor.Models;
 using PlantUMLEditor.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -11,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace PlantUMLEditor.Views
 {
@@ -22,7 +26,7 @@ namespace PlantUMLEditor.Views
         private StatusNotificationService _statusNotificationService;
         private ApiKeyManager _apiKeyManager;
         private SpinnerService _spinnerService;
-        private List<object> _conversationHistory;
+        private ObservableCollection<ChatMessage> _messages = new ObservableCollection<ChatMessage>();
 
         private const double ZoomStep = 0.1;
         private const double MaxZoom = 3.5;
@@ -34,7 +38,7 @@ namespace PlantUMLEditor.Views
         public MainWindow()
         {
             InitializeComponent();
-            
+
             _statusNotificationService = new StatusNotificationService(statusNotification, statusText);
             _apiKeyManager = new ApiKeyManager(_configFilePath);
             _spinnerService = new SpinnerService(spinnerRotation);
@@ -49,10 +53,20 @@ namespace PlantUMLEditor.Views
                 cmbDiagramType.Items.Add(new ComboBoxItem { Content = template.Key });
             }
 
-            _conversationHistory = new List<object>
+            var view = CollectionViewSource.GetDefaultView(_messages);
+            view.Filter = (obj) =>
             {
-                new { role = "system", content = "Ti si asistent koji pomaže s kreiranjem i analizom PlantUML dijagrama te pomažeš s generiranjem PlantUML koda. Neka objašnjenja budu kratka i jasna." }
+                if (obj is ChatMessage msg)
+                    return msg.role == "user" || msg.role == "assistant";
+                return false;
             };
+            ChatList.ItemsSource = view;
+
+            _messages.Add(new ChatMessage
+            {
+                role = "system", 
+                content = "Ti si asistent koji pomaže s kreiranjem i analizom PlantUML dijagrama te pomažeš s generiranjem PlantUML koda. Neka objašnjenja budu kratka i jasna."
+            });
         }
 
         private void txtPlantUmlCode_TextChanged(object sender, TextChangedEventArgs e)
@@ -398,7 +412,10 @@ namespace PlantUMLEditor.Views
                 }
 
                 btnSendQuery.IsEnabled = false;
-                txtChatResponse.Text = "Učitavanje odgovora...";
+                txtChatInput.Clear();
+                _messages.Add(new ChatMessage { role = "user", content = input });
+
+                CollectionViewSource.GetDefaultView(_messages).Refresh();
 
                 string apiKey = _apiKeyManager.GetApiKey();
 
@@ -411,12 +428,12 @@ namespace PlantUMLEditor.Views
 
                 string response = await SendChatGPTRequestAsync(input, apiKey);
 
-                txtChatResponse.Text = response;
+                _messages.Add(new ChatMessage { role = "assistant", content = response });
+                CollectionViewSource.GetDefaultView(_messages).Refresh();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Došlo je do pogreške: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
-                txtChatResponse.Text = string.Empty;
             }
             finally
             {
@@ -457,12 +474,10 @@ namespace PlantUMLEditor.Views
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                _conversationHistory.Add(new { role = "user", content = prompt });
-
                 var requestData = new
                 {
                     model = "gpt-3.5-turbo",
-                    messages = _conversationHistory,
+                    messages = _messages,
                     max_tokens = 1000,
                     temperature = 0.7
                 };
@@ -480,20 +495,21 @@ namespace PlantUMLEditor.Views
                 dynamic jsonResponse = JsonConvert.DeserializeObject(responseContent);
                 string reply = jsonResponse.choices[0].message.content.ToString();
 
-                _conversationHistory.Add(new { role = "assistant", content = reply });
-
                 return reply;
             }
         }
 
         private void btnResetChat_Click(object sender, RoutedEventArgs e)
         {
-            _conversationHistory = new List<object>
-            {
-                new { role = "system", content = "Ti si asistent koji pomaže s kreiranjem i analizom PlantUML dijagrama te pomažeš s generiranjem PlantUML koda. Neka objašnjenja budu kratka i jasna." }
-            };
+            _messages.Clear();
 
-            txtChatResponse.Clear();
+            _messages.Add(new ChatMessage 
+            { 
+                role = "system", 
+                content = "Ti si asistent koji pomaže s kreiranjem i analizom PlantUML dijagrama te pomažeš s generiranjem PlantUML koda. Neka objašnjenja budu kratka i jasna." 
+            });
+
+            CollectionViewSource.GetDefaultView(_messages).Refresh();
         }
     }
 }
