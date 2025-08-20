@@ -413,6 +413,7 @@ namespace PlantUMLEditor.Views
 
                 btnSendQuery.IsEnabled = false;
                 txtChatInput.Clear();
+                txtChatInput.ScrollToEnd();
                 _messages.Add(new ChatMessage { role = "user", content = input });
 
                 CollectionViewSource.GetDefaultView(_messages).Refresh();

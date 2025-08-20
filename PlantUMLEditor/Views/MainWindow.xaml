@@ -74,7 +74,7 @@
                                  TextWrapping="Wrap"
                                  VerticalScrollBarVisibility="Auto" 
                                  HorizontalScrollBarVisibility="Auto" 
-                                 MaxHeight="332"
+                                 MaxHeight="327"
                                  VerticalContentAlignment="Center" 
                                  TextChanged="txtPlantUmlCode_TextChanged"/>
                         <TextBlock x:Name="txtPlantUmlPlaceholder"
@@ -153,7 +153,7 @@
                                    Margin="9,0,0,0"/>
 
                         <Button x:Name="btnSendQuery" Grid.Row="3" Content="Pošalji upit" Margin="0,15,0,0" Width="100" Height="25" HorizontalAlignment="Right" Click="SendChatGPTQuery_Click"/>
-                        <Button x:Name="btnResetChat" Grid.Row="3" Content="Resetiraj razgovor" Margin="10,15,0,0" Width="120" Height="25" HorizontalAlignment="Center" Click="btnResetChat_Click"/>
+                        <Button x:Name="btnResetChat" Grid.Row="3" Content="Novi razgovor" Margin="30,15,0,0" Width="100" Height="25" HorizontalAlignment="Center" Click="btnResetChat_Click"/>
 
                     </Grid>
                 </TabItem>
