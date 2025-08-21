@@ -1,10 +1,8 @@
 ﻿using Microsoft.Win32;
 using Newtonsoft.Json;
-using PlantUMLEditor.Converters;
 using PlantUMLEditor.Models;
 using PlantUMLEditor.Services;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -23,8 +21,9 @@ namespace PlantUMLEditor.Views
         private string _plantUmlJarPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jarFiles", "plantuml-1.2025.2.jar");
         private readonly string _outputDirectory = Path.Combine(Path.GetTempPath(), "PlantUML");
         private readonly string _configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PlantUMLEditor", "config.dat");
-        private StatusNotificationService _statusNotificationService;
         private ApiKeyManager _apiKeyManager;
+        private ChatGPTIntegrationManager _chatGPTIntegrationManager;
+        private StatusNotificationService _statusNotificationService;
         private SpinnerService _spinnerService;
         private ObservableCollection<ChatMessage> _messages = new ObservableCollection<ChatMessage>();
 
@@ -39,8 +38,9 @@ namespace PlantUMLEditor.Views
         {
             InitializeComponent();
 
-            _statusNotificationService = new StatusNotificationService(statusNotification, statusText);
+            _chatGPTIntegrationManager = new ChatGPTIntegrationManager();
             _apiKeyManager = new ApiKeyManager(_configFilePath);
+            _statusNotificationService = new StatusNotificationService(statusNotification, statusText);
             _spinnerService = new SpinnerService(spinnerRotation);
             _spinnerService.StartAnimation();
 
@@ -427,7 +427,7 @@ namespace PlantUMLEditor.Views
                     return;
                 }
 
-                string response = await SendChatGPTRequestAsync(input, apiKey);
+                string response = await _chatGPTIntegrationManager.SendRequestAsync(_messages, apiKey);
 
                 _messages.Add(new ChatMessage { role = "assistant", content = response });
                 CollectionViewSource.GetDefaultView(_messages).Refresh();
@@ -464,39 +464,6 @@ namespace PlantUMLEditor.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Pogreška pri spremanju API ključa: {ex.Message}", "Pogreška", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task<string> SendChatGPTRequestAsync(string prompt, string apiKey)
-        {
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri("https://api.openai.com/v1/chat/completions");
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var requestData = new
-                {
-                    model = "gpt-3.5-turbo",
-                    messages = _messages,
-                    max_tokens = 1000,
-                    temperature = 0.7
-                };
-
-                var content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync("", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception($"API greška: {response.StatusCode}, {responseContent}");
-                }
-
-                dynamic jsonResponse = JsonConvert.DeserializeObject(responseContent);
-                string reply = jsonResponse.choices[0].message.content.ToString();
-
-                return reply;
             }
         }
 

@@ -17,9 +17,9 @@ namespace PlantUMLEditor.Services
 
         private static readonly Dictionary<string, string> _defaultTemplates = new Dictionary<string, string>
         {
-            { "Dijagram sekvenci",
+            { "Dijagram slijeda",
               "@startuml\n" +
-              "title Dijagram sekvenci\n\n" +
+              "title Dijagram slijeda\n\n" +
               "actor Korisnik\n" +
               "participant \"Prva komponenta\" as A\n" +
               "participant \"Druga komponenta\" as B\n\n" +
@@ -32,7 +32,7 @@ namespace PlantUMLEditor.Services
 
             { "Dijagram slučajeva korištenja",
               "@startuml\n" +
-              "title Dijagram slucajeva koristenja\n\n" +
+              "title Dijagram slučajeva korištenja\n\n" +
               "left to right direction\n" +
               "actor Korisnik\n" +
               "actor Administrator\n\n" +
@@ -45,9 +45,9 @@ namespace PlantUMLEditor.Services
               "@enduml"
             },
 
-            { "Klasni dijagram",
+            { "Dijagram klasa",
               "@startuml\n" +
-              "title Klasni dijagram\n\n" +
+              "title Dijagram klasa\n\n" +
               "class Korisnik {\n" +
               "  -String ime\n" +
               "  -String prezime\n" +

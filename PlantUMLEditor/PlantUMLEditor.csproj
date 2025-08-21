@@ -90,6 +90,7 @@
     <Compile Include="Converters\RoleToColorConverter.cs" />
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Services\ApiKeyManager.cs" />
+    <Compile Include="Services\ChatGPTIntegrationManager.cs" />
     <Compile Include="Services\DiagramGenerator.cs" />
     <Compile Include="Services\SpinnerService.cs" />
     <Compile Include="Services\StatusNotificationService.cs" />
